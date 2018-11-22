@@ -68,58 +68,27 @@
         var myCategories = ["05", "06", "07", "08", "09", "10", "11", "12"];
         var myCountries = {
                         'USA': {
-                            name: "美国",
+                            name: "United States",
                             code3: "USA",
                             data: [180671000, 183691000, 186538000]
                         },
                         'CHN': {
-                            name: "中国",
+                            name: "China",
                             code3: "CHN",
-                            data: [452, 456, 555554444444]
-                        },
-                        'DEU': {
-                            name: "德国",
-                            code3: "DEU",
-                            data: [16764.7895651265, 45678, 5555555]
-                        },
-                        'JPN': {
-                            name: "日本",
-                            code3: "JPN",
-                            data: [456, 251567894561657265, 789]
+                            data: [165651265, 25156165265, 65748676873]
                         }
                     };
          var myData = [{
-                        name: "美国",
+                        name: "United States",
                         code3: "USA",
-                        value: 102911, 
+                        value: 102911,
                         year: "08"
                     }, {
-                        name: "德国",
-                        code3: "DEU",
-                        value: 30551674,
-                        year: "05"
-                    }, {
-                        name: "日本",
-                        code3: "JPN",
-                        value: 30551674,
-                        year: "05"
-                    }, {
-                        name: "中国",
+                        name: "China",
                         code3: "CHN",
                         value: 30551674,
                         year: "02"
-                    },
-                    
-                    ];
-
-                    var country = [
-                        'us',
-                        'jp',
-                        'sc',
-                        'in',
-                        'fr',
-                    ]
-
+                    }];
         var categories = myCategories;
         var countries = myCountries;
         var data = myData;
@@ -129,7 +98,64 @@
         $(() => {
             $.getJSON('https://data.jianshukeji.com/jsonp?filename=csv/world-population-history.csv&callback=?',
                 function (csv) {
-                    var countryChart
+                   
+                    function CSVtoArray(text) {
+                        return text.replace(/^"/, '')
+                            .replace(/",$/, '')
+                            .split('","');
+                    };
+
+
+                    csv = csv.split(/\n/);
+                    var
+                        countryChart,
+                        numRegex = /^[0-9\.]+$/,
+                        quoteRegex = /\"/g
+                        //categories = CSVtoArray(csv[1]).slice(4);
+                    //categories = ["05", "06", "07", "08", "09", "10", "11", "12"];
+                    // Parse the CSV into arrays, one array each country
+                    $.each(csv.slice(2), function (j, line) {
+                        var row = CSVtoArray(line),
+                            data = row.slice(4);
+                        $.each(data, function (i, val) {
+                            val = val.replace(quoteRegex, '');
+                            if (numRegex.test(val)) {
+                                val = parseInt(val);
+                            } else if (!val) {
+                                val = null;
+                            }
+                            data[i] = val;
+                        });
+                        // countries[row[1]] = {
+                        //     name: row[0],
+                        //     code3: row[1],
+                        //     data: data
+                        // };
+                    });
+                   
+
+                    // For each country, use the latest value for current population
+                    //var data = [];
+                    for (var code3 in countries) {
+                        var value = null,
+                            year,
+                            itemData = countries[code3].data,
+                            i = itemData.length;
+                        while (i--) {
+                            if (typeof itemData[i] === 'number') {
+                                value = itemData[i];
+                                year = categories[i];
+                                break;
+                            }
+                        }
+                        // data.push({
+                        //     name: countries[code3].name,
+                        //     code3: code3,
+                        //     value: value,
+                        //     year: year
+                        // });
+                    }
+                    
                     // Add lower case codes to the data set for inclusion in the tooltip.pointFormat
                     var mapData = Highcharts.geojson(Highcharts.maps['custom/world']);
                     $.each(mapData, function () {
@@ -149,7 +175,7 @@
                                 $('#info h2').html('Comparing countries');
                             }
                             $('#info .subheader').html(
-                                '<h4>时实销量走向</h4><small><em></em></small>'
+                                '<h4>Historical population</h4><small><em>Shift + Click on map to compare countries</em></small>'
                             )
                             if (!countryChart) {
                                 countryChart = $('#country-chart').highcharts({
@@ -227,11 +253,11 @@
                     // Initiate the map chart
                     mapChart = Highcharts.mapChart('container', {
                         title: {
-                            text: ''
+                            text: 'Population history by country'
                         },
-                        // subtitle: {
-                        //     text: '数据来源: <a href="http://data.worldbank.org/indicator/SP.POP.TOTL/countries/1W?display=default">孙哥的接口</a>'
-                        // },
+                        subtitle: {
+                            text: 'Source: <a href="http://data.worldbank.org/indicator/SP.POP.TOTL/countries/1W?display=default">The World Bank</a>'
+                        },
                         mapNavigation: {
                             enabled: true,
                             buttonOptions: {
@@ -243,6 +269,9 @@
                             endOnTick: false,
                             startOnTick: false,
                             min: 50000
+                        },
+                        tooltip: {
+                            footerFormat: '<span style="font-size: 10px">(Click for details)</span>'
                         },
                         series: [{
                             data: data,
@@ -266,14 +295,15 @@
                     var country = [
                         'us',
                         'jp',
-                        'de',
-                        'ch'
+                        'sc',
+                        'in',
+                        'fr',
                     ]
 
-                    setInterval(() => {
-                        let index = parseInt(Math.random() * 4 + 1, 10) - 1
-                        mapChart.get(country[index]).select();
-                    }, 2000)  
+                    // setInterval(() => {
+                    //     let index = parseInt(Math.random() * 5 + 1, 10) - 1
+                    //     mapChart.get(country[index]).select();
+                    // }, 2000)  
 
                 });
 
